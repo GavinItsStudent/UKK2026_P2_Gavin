@@ -21,21 +21,21 @@ class AuthController extends Controller
 
         if (Auth::attempt([
             $field => $login,
-            'password' => $password,
-            'status_aktif' => 1
+            'password' => $password
         ])) {
             $request->session()->regenerate();
 
-            $user = Auth::user(); // ambil user yang login
-            $role = $user->role;
+            $user = Auth::user();
 
-            if ($role === 'admin') {
-                return redirect()->route('admin.dashboard')->with('success', 'Welcome, ' . $user->name . '!');
+            
+            $user->update([
+                'status_aktif' => 1
+            ]);
+
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard')
+                    ->with('success', 'Login berhasil, selamat datang ' . $user->username);
             }
-
-            // Tambahkan role lain di sini
-            // if ($role === 'petugas') ...
-            // if ($role === 'owner') ...
 
             Auth::logout();
             return back()->with('error', 'Role tidak dikenali');
@@ -46,7 +46,15 @@ class AuthController extends Controller
 
     public function logout()
     {
+        if (Auth::check()) {
+            Auth::user()->update([
+                'status_aktif' => 0
+            ]);
+        }
+
         Auth::logout();
-        return redirect()->route('login');
+
+        return redirect()->route('login')
+            ->with('success', 'Berhasil logout');
     }
 }
