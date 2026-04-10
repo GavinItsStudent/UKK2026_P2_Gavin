@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('plat_nomor', 15);
             $table->enum('jenis_kendaraan', ['motor', 'mobil']);
             $table->string('warna', 20);
-            $table->string('pemilik', 100);
             $table ->foreignId('user_id')->constrained('users');
             $table->timestamps();
         });

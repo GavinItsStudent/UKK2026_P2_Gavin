@@ -284,26 +284,28 @@
 
 
     <script>
-        document.querySelectorAll('.btn-delete').forEach(button => {
-            button.addEventListener('click', function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', function() {
 
-                let id = this.getAttribute('data-id');
+                    let id = this.getAttribute('data-id');
 
-                Swal.fire({
-                    title: 'Yakin hapus?',
-                    text: "Data user akan dihapus permanen!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#696cff',
-                    cancelButtonColor: '#8592a3',
-                    confirmButtonText: 'Ya, hapus!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        document.getElementById('delete-form-' + id).submit();
-                    }
+                    Swal.fire({
+                        title: 'Yakin hapus?',
+                        text: "Data user akan dihapus permanen!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#696cff',
+                        cancelButtonColor: '#8592a3',
+                        confirmButtonText: 'Ya, hapus!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('delete-form-' + id).submit();
+                        }
+                    });
+
                 });
-
             });
         });
     </script>

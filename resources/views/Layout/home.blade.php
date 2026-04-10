@@ -107,6 +107,12 @@
                                 <div data-i18n="Kelola Area">Kelola Area</div>
                             </a>
                         </li>
+                        <li class="menu-item {{ request()->routeIs('admin.kendaraan') ? 'active' : '' }}">
+                            <a href="{{ route('admin.kendaraan') }}" class="menu-link">
+                                <i class="menu-icon ri ri-car-line"></i>
+                                <div data-i18n="Kelola Kendaraan">Kelola Kendaraan</div>
+                            </a>
+                        </li>
                         <li class="menu-item {{ request()->routeIs('admin.log') ? 'active' : '' }}">
                             <a href="{{ route('admin.log') }}" class="menu-link">
                                 <i class="menu-icon ri ri-file-list-3-line"></i>

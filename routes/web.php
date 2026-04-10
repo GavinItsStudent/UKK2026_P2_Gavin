@@ -12,10 +12,10 @@ Route::post('/login', [AuthController::class, 'login_proses'])->name('login-pros
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
-// ===== DASHBOARD =====
+    // ===== DASHBOARD =====
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])
         ->name('admin.dashboard');
-    
+
     Route::get('/admin/users', [AdminController::class, 'users'])
         ->name('admin.users');
 
@@ -39,7 +39,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::delete('/admin/shift/{id}', [AdminController::class, 'destroyShift'])
         ->name('admin.shift.destroy');
-    
+
     Route::get('/admin/tarif', [AdminController::class, 'tarif'])
         ->name('admin.tarif');
 
@@ -63,7 +63,15 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::delete('/admin/area/{id}', [AdminController::class, 'destroyArea'])
         ->name('admin.area.destroy');
-   
+
+    Route::get('/admin/kendaraan', [AdminController::class, 'kendaraan'])->name('admin.kendaraan');
+
+    Route::post('/admin/kendaraan', [AdminController::class, 'storeKendaraan'])->name('admin.kendaraan.store');
+
+    Route::put('/admin/kendaraan/{id}', [AdminController::class, 'updateKendaraan'])->name('admin.kendaraan.update');
+
+    Route::delete('/admin/kendaraan/{id}', [AdminController::class, 'destroyKendaraan'])->name('admin.kendaraan.destroy');
+
     Route::get('/admin/log', [AdminController::class, 'log'])
         ->name('admin.log');
 });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaksi;
 use App\Models\User;
 use App\Models\AreaParkir;
+use App\Models\Kendaraan;
 use App\Models\LogAktivitas;
 use App\Models\Shift;
 use App\Models\Tarif;
@@ -14,7 +15,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
-    // ================= DASHBOARD =================
     public function dashboard()
     {
         $today = Carbon::today();
@@ -42,7 +42,6 @@ class AdminController extends Controller
         ));
     }
 
-    // ================= USER =================
     public function users()
     {
         $users = User::where('role', '!=', 'admin')
@@ -322,7 +321,7 @@ class AdminController extends Controller
             'kapasitas' => 'required|integer|min:1'
         ]);
 
-        // 🚨 CEK PERUBAHAN
+
         if (
             $request->nama_area == $area->nama_area &&
             $request->kapasitas == $area->kapasitas
@@ -358,6 +357,39 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', 'Area berhasil dihapus');
+    }
+
+    public function kendaraan()
+    {
+        $kendaraans = Kendaraan::latest()->get();
+        return view('admin.kendaraan', compact('kendaraans'));
+    }
+
+    public function storeKendaraan(Request $request)
+    {
+        $request->validate([
+            'plat_nomor' => 'required|max:15',
+            'jenis_kendaraan' => 'required|in:motor,mobil',
+            'warna' => 'required|max:20'
+        
+        ]);
+
+        Kendaraan::create([
+            'plat_nomor' => $request->plat_nomor,
+            'jenis_kendaraan' => $request->jenis_kendaraan,
+            'warna' => $request->warna,
+            'user_id' => auth()->id()
+        ]);
+
+        return back()->with('success', 'Kendaraan berhasil ditambahkan');
+    }
+
+    public function destroyKendaraan($id)
+    {
+        $k = Kendaraan::findOrFail($id);
+        $k->delete();
+
+        return back()->with('success', 'Kendaraan berhasil dihapus');
     }
 
     public function log()

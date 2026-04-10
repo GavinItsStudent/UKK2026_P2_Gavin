@@ -12,8 +12,7 @@ class Kendaraan extends Model
         'plat_nomor',
         'jenis_kendaraan',
         'warna',
-        'pemilik',
-        'user_id'
+        'user_id',
     ];
 
     public function user()
