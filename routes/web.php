@@ -6,82 +6,79 @@ use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\PetugasController;
 use Illuminate\Support\Facades\Route;
 
-// ================= Auth & Profile (public) =================
+
 Route::get('/', [AuthController::class, 'login'])->name('login');
 Route::post('/login', [AuthController::class, 'login_proses'])->name('login-proses');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    // ===== DASHBOARD =====
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])
-        ->name('admin.dashboard');
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->controller(AdminController::class)
+    ->group(function () {
 
-    Route::get('/admin/users', [AdminController::class, 'users'])
-        ->name('admin.users');
+        Route::get('/dashboard', 'dashboard')->name('dashboard');
 
-    Route::post('/admin/users', [AdminController::class, 'storeUser'])
-        ->name('admin.users.store');
+        Route::get('/users', 'users')->name('users');
+        Route::post('/users', 'storeUser')->name('users.store');
+        Route::put('/users/{id}', 'updateUser')->name('users.update');
+        Route::delete('/users/{id}', 'destroyUser')->name('users.destroy');
 
-    Route::put('/admin/users/{id}', [AdminController::class, 'updateUser'])
-        ->name('admin.users.update');
+        Route::get('/shift', 'shiftUser')->name('shift');
+        Route::post('/shift', 'storeShift')->name('shift.store');
+        Route::put('/shift/{id}', 'updateShift')->name('shift.update');
+        Route::delete('/shift/{id}', 'destroyShift')->name('shift.destroy');
 
-    Route::delete('/admin/users/{id}', [AdminController::class, 'destroyUser'])
-        ->name('admin.users.destroy');
+        Route::get('/tarif', 'tarif')->name('tarif');
+        Route::post('/tarif', 'storeTarif')->name('tarif.store');
+        Route::put('/tarif/{id}', 'updateTarif')->name('tarif.update');
+        Route::delete('/tarif/{id}', 'destroyTarif')->name('tarif.destroy');
 
-    Route::get('/admin/shift', [AdminController::class, 'shiftUser'])
-        ->name('admin.shift');
+        Route::get('/area', 'area')->name('area');
+        Route::post('/area', 'storeArea')->name('area.store');
+        Route::put('/area/{id}', 'updateArea')->name('area.update');
+        Route::delete('/area/{id}', 'destroyArea')->name('area.destroy');
 
-    Route::post('/admin/shift', [AdminController::class, 'storeShift'])
-        ->name('admin.shift.store');
+        Route::get('/kendaraan', 'kendaraan')->name('kendaraan');
+        Route::post('/kendaraan', 'storeKendaraan')->name('kendaraan.store');
+        Route::put('/kendaraan/{id}', 'updateKendaraan')->name('kendaraan.update');
+        Route::delete('/kendaraan/{id}', 'destroyKendaraan')->name('kendaraan.destroy');
 
-    Route::put('/admin/shift/{id}', [AdminController::class, 'updateShift'])
-        ->name('admin.shift.update');
+        Route::get('/log', 'log')->name('log');
+    });
 
-    Route::delete('/admin/shift/{id}', [AdminController::class, 'destroyShift'])
-        ->name('admin.shift.destroy');
+Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->group(function () {
 
-    Route::get('/admin/tarif', [AdminController::class, 'tarif'])
-        ->name('admin.tarif');
+    Route::get('/dashboard', [PetugasController::class, 'dashboard'])
+        ->name('petugas.dashboard');
 
-    Route::post('/admin/tarif', [AdminController::class, 'storeTarif'])
-        ->name('admin.tarif.store');
+    Route::get('/transaksi', [PetugasController::class, 'transaksi'])
+        ->name('petugas.transaksi');
 
-    Route::put('/admin/tarif/{id}', [AdminController::class, 'updateTarif'])
-        ->name('admin.tarif.update');
+    Route::post('/transaksi', [PetugasController::class, 'store'])
+        ->name('petugas.transaksi.store');
 
-    Route::delete('/admin/tarif/{id}', [AdminController::class, 'destroyTarif'])
-        ->name('admin.tarif.destroy');
+    Route::post('/transaksi/{id}/keluar', [PetugasController::class, 'keluar'])
+        ->name('petugas.transaksi.keluar');
 
-    Route::get('/admin/area', [AdminController::class, 'area'])
-        ->name('admin.area');
+    Route::delete('/transaksi/{id}', [PetugasController::class, 'destroy'])
+        ->name('petugas.transaksi.destroy');
 
-    Route::post('/admin/area', [AdminController::class, 'storeArea'])
-        ->name('admin.area.store');
+    Route::get('/transaksi/{id}/print', [PetugasController::class, 'print'])
+        ->name('petugas.transaksi.print');
 
-    Route::put('/admin/area/{id}', [AdminController::class, 'updateArea'])
-        ->name('admin.area.update');
+    Route::get('/transaksi/struk/{id}', [PetugasController::class, 'strukMasuk'])
+        ->name('petugas.transaksi.struk');
 
-    Route::delete('/admin/area/{id}', [AdminController::class, 'destroyArea'])
-        ->name('admin.area.destroy');
+    Route::post('/transaksi/{id}/cash', [PetugasController::class, 'bayarCash'])
+        ->name('petugas.transaksi.cash');
 
-    Route::get('/admin/kendaraan', [AdminController::class, 'kendaraan'])->name('admin.kendaraan');
+    Route::get('/transaksi/{id}/qris', [PetugasController::class, 'bayarQris'])
+        ->name('petugas.transaksi.qris');
 
-    Route::post('/admin/kendaraan', [AdminController::class, 'storeKendaraan'])->name('admin.kendaraan.store');
-
-    Route::put('/admin/kendaraan/{id}', [AdminController::class, 'updateKendaraan'])->name('admin.kendaraan.update');
-
-    Route::delete('/admin/kendaraan/{id}', [AdminController::class, 'destroyKendaraan'])->name('admin.kendaraan.destroy');
-
-    Route::get('/admin/log', [AdminController::class, 'log'])
-        ->name('admin.log');
+    Route::get('/transaksi/{id}/qris/success', [PetugasController::class, 'qrisSuccess'])
+        ->name('petugas.transaksi.qris.success');
 });
-
-// ================= Petugas =================
-Route::middleware(['auth', 'role:petugas'])->group(function () {
-    Route::get('/petugas/dashboard', [PetugasController::class, 'dashboard'])->name('petugas.dashboard');
-    Route::get('/petugas/transaksi', [PetugasController::class, 'transaksi'])->name('petugas.transaksi');
-});
-
 
 Route::middleware(['auth', 'role:owner'])->group(function () {
     Route::get('/owner/dashboard', [OwnerController::class, 'dashboard'])->name('owner.dashboard');

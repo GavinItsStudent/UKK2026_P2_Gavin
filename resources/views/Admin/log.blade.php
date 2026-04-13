@@ -3,8 +3,9 @@
 @section('content')
 <div class="container-xxl container-p-y">
 
-    <h4 class="fw-bold mb-4">Log Aktivitas</h4>
-
+    <h4 class="fw-bold mb-0">Log Aktivitas</h4>
+     <small class="text-muted">Manajemen log aktivitas sistem</small>
+     
     <div class="card">
         <div class="table-responsive">
             <table class="table table-sm">

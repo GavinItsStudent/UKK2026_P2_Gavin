@@ -126,13 +126,14 @@
                         <li class="menu-item {{ request()->routeIs('petugas.dashboard') ? 'active' : '' }}">
                             <a href="{{ route('petugas.dashboard') }}" class="menu-link">
                                 <i class="menu-icon ri ri-home-4-line"></i>
-                                <div data-i18n="Dashboard">Dashboard</div>
+                                <div>Dashboard</div>
                             </a>
                         </li>
-                        <li class="menu-item ">
-                            <a href="{{ route('petugas.transaksi.index') }}" class="menu-link">
+
+                        <li class="menu-item {{ request()->routeIs('petugas.transaksi') ? 'active' : '' }}">
+                            <a href="{{ route('petugas.transaksi') }}" class="menu-link">
                                 <i class="menu-icon ri ri-shopping-cart-line"></i>
-                                <div data-i18n="Transaksi">Transaksi</div>
+                                <div>Transaksi</div>
                             </a>
                         </li>
                     @endif

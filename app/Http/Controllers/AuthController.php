@@ -37,6 +37,16 @@ class AuthController extends Controller
                     ->with('success', 'Login berhasil, selamat datang ' . $user->username);
             }
 
+             if ($user->role === 'petugas') {
+                return redirect()->route('petugas.dashboard')
+                    ->with('success', 'Login berhasil, selamat datang ' . $user->username);
+            }
+
+             if ($user->role === 'owner') {
+                return redirect()->route('owner.dashboard')
+                    ->with('success', 'Login berhasil, selamat datang ' . $user->username);
+            }
+
             Auth::logout();
             return back()->with('error', 'Role tidak dikenali');
         }

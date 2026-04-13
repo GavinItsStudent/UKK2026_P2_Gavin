@@ -1,312 +1,252 @@
 @extends('Layout.home')
 
 @section('content')
-    <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="container-xxl container-p-y">
 
         <!-- HEADER -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h4 class="fw-bold mb-0">Manajemen User</h4>
-                <small class="text-muted">Kelola pengguna sistem parkir</small>
+                <h4 class="fw-bold mb-0">Kelola User</h4>
+                <small class="text-muted">Manajemen pengguna sistem</small>
             </div>
 
-            <!-- BUTTON TAMBAH -->
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalUser">
-                <i class="ri-add-line me-1"></i> Tambah User
+            <button onclick="printTable()" class="btn btn-outline-secondary">
+                <i class="ri-printer-line me-1"></i> Print
             </button>
         </div>
 
-        <div class="col-12">
-            <div class="card overflow-hidden">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th class="text-truncate">User</th>
+        <!-- ALERT -->
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
 
-                                <th class="text-truncate">Role</th>
-                                <th class="text-truncate">Status</th>
-                                <th class="text-truncate text-end">Aksi</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            @foreach ($users as $user)
-                                <tr>
-
-                                    <!-- USER -->
-                                    <td>
-                                        <div class="d-flex align-items-center">
-
-                                            <!-- AVATAR -->
-                                            <div class="avatar avatar-sm me-4">
-                                                <div class="avatar avatar-sm me-4">
-                                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($user->username) }}&background=random"
-                                                        class="rounded-circle" />
-                                                </div>
-                                            </div>
-
-                                            <!-- NAME -->
-                                            <div>
-                                                <h6 class="mb-0 text-truncate">
-                                                    {{ $user->username }}
-                                                </h6>
-                                                <small class="text-truncate text-muted">
-                                                    {{ $user->email }}
-                                                </small>
-                                            </div>
-
-                                        </div>
-                                    </td>
-
-
-
-                                    <!-- ROLE -->
-                                    <td class="text-truncate">
-                                        <div class="d-flex align-items-center">
-
-                                            @if ($user->role == 'admin')
-                                                <i class="icon-base ri ri-vip-crown-line icon-22px text-primary me-2"></i>
-                                            @elseif($user->role == 'petugas')
-                                                <i class="icon-base ri ri-shield-user-line icon-22px text-warning me-2"></i>
-                                            @else
-                                                <i class="icon-base ri ri-user-3-line icon-22px text-info me-2"></i>
-                                            @endif
-
-                                            <span>{{ ucfirst($user->role) }}</span>
-                                        </div>
-                                    </td>
-
-                                    <!-- STATUS -->
-                                    <td>
-                                        @if ($user->status_aktif)
-                                            <span class="badge bg-label-success rounded-pill">
-                                                Active
-                                            </span>
-                                        @else
-                                            <span class="badge bg-label-secondary rounded-pill">
-                                                Inactive
-                                            </span>
-                                        @endif
-                                    </td>
-
-                                    <td class="text-end">
-
-                                        <!-- EDIT BUTTON -->
-                                        <button class="btn btn-sm btn-icon" data-bs-toggle="modal"
-                                            data-bs-target="#editUser{{ $user->id }}">
-                                            <i class="ri-pencil-line"></i>
-                                        </button>
-
-                                        <!-- DELETE BUTTON -->
-                                        <button class="btn btn-sm btn-icon text-danger btn-delete"
-                                            data-id="{{ $user->id }}">
-                                            <i class="ri-delete-bin-line"></i>
-                                        </button>
-
-                                        <!-- FORM DELETE (hidden) -->
-                                        <form id="delete-form-{{ $user->id }}"
-                                            action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
-                                            style="display:none;">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
-
-                                    </td>
-
-                                </tr>
-                            @endforeach
-                        </tbody>
-
-                    </table>
-
-                    @foreach ($users as $user)
-                        <div class="modal fade" id="editUser{{ $user->id }}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <form action="{{ route('admin.users.update', $user->id) }}" method="POST"
-                                    class="modal-content">
-                                    @csrf
-                                    @method('PUT')
-
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Edit User</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-
-                                    <div class="modal-body">
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Username</label>
-                                            <input type="text" name="username"
-                                                class="form-control @error('username') is-invalid @enderror"
-                                                placeholder="Masukkan username"
-                                                value="{{ old('username', $user->username) }}">
-
-                                            @error('username')
-                                                <small class="text-danger">{{ $message }}</small>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Email</label>
-                                            <input type="email" name="email"
-                                                class="form-control @error('email') is-invalid @enderror"
-                                                placeholder="contoh@email.com" value="{{ old('email', $user->email) }}">
-
-                                            @error('email')
-                                                <small class="text-danger">{{ $message }}</small>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Password (jika lupa saja)</label>
-                                            <input type="password" name="password"
-                                                class="form-control @error('password') is-invalid @enderror"
-                                                placeholder="Kosongkan jika tidak diubah">
-
-                                            @error('password')
-                                                <small class="text-danger">{{ $message }}</small>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Role</label>
-                                            <select name="role" class="form-select @error('role') is-invalid @enderror">
-                                                <option value="petugas"
-                                                    {{ old('role', $user->role) == 'petugas' ? 'selected' : '' }}>Petugas
-                                                </option>
-                                                <option value="owner"
-                                                    {{ old('role', $user->role) == 'owner' ? 'selected' : '' }}>Owner
-                                                </option>
-                                            </select>
-
-                                            @error('role')
-                                                <small class="text-danger">{{ $message }}</small>
-                                            @enderror
-                                        </div>
-                                        @if ($errors->any())
-                                            <script>
-                                                var myModal = new bootstrap.Modal(document.getElementById('modalUser'));
-                                                myModal.show();
-                                            </script>
-                                        @endif
-                                    </div>
-
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-label-secondary"
-                                            data-bs-dismiss="modal">Batal</button>
-                                        <button type="submit" class="btn btn-primary">Update</button>
-                                    </div>
-
-                                </form>
-                            </div>
-                        </div>
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $e)
+                        <li>{{ $e }}</li>
                     @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <!-- FORM TAMBAH -->
+        <div class="card p-3 mb-4">
+            <form action="{{ route('admin.users.store') }}" method="POST" class="row g-3">
+                @csrf
+
+                <div class="col-md-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" value="{{ old('username') }}" class="form-control" placeholder="Masukan Username">
                 </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" value="{{ old('email') }}" class="form-control" placeholder="Masukan Email">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Masukan Password">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Role</label>
+                    <select name="role" class="form-select">
+                        <option value="">-- Pilih --</option>
+                        <option value="petugas">Petugas</option>
+                        <option value="owner">Owner</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Shift</label>
+                    <select name="shift_id" class="form-select">
+                        <option value="">-- Pilih --</option>
+                        @foreach ($shifts as $shift)
+                            <option value="{{ $shift->id }}">{{ $shift->nama_shift }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-12 text-end">
+                    <button class="btn btn-primary px-4">
+                        <i class="ri-add-line me-1"></i> Tambah
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- TABLE -->
+        <div class="card" id="printArea">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Shift</th>
+                            <th>Status</th>
+                            <th class="text-end no-print">Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @forelse ($users as $user)
+                            <tr>
+
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($user->username) }}"
+                                            class="rounded-circle me-2" width="35">
+                                        <div>
+                                            <b>{{ $user->username }}</b><br>
+                                            <small>{{ $user->email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        {{ ucfirst($user->role) }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ optional($user->shift)->nama_shift ?? '-' }}
+                                </td>
+
+                                <td>
+                                    @if ($user->status_aktif)
+                                        <span class="badge bg-success">Active</span>
+                                    @else
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    @endif
+                                </td>
+
+                                <td class="text-end no-print">
+
+                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                        data-bs-target="#editUser{{ $user->id }}">
+                                        <i class="ri-pencil-line"></i>
+                                    </button>
+
+                                    <button class="btn btn-sm btn-danger btn-delete" data-id="{{ $user->id }}">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+
+                                    <form id="delete-form-{{ $user->id }}"
+                                        action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
+                                        style="display:none;">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    Tidak ada data user
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
 
     </div>
 
-    <!-- MODAL TAMBAH USER -->
-    <div class="modal fade" id="modalUser" tabindex="-1">
-        <div class="modal-dialog">
-            <form action="{{ route('admin.users.store') }}" method="POST" class="modal-content">
-                @csrf
+    <!-- MODAL EDIT -->
+    @foreach ($users as $user)
+        <div class="modal fade" id="editUser{{ $user->id }}">
+            <div class="modal-dialog">
+                <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
 
-                <div class="modal-header">
-                    <h5 class="modal-title">Tambah User</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+                    <div class="modal-content">
 
-                <div class="modal-body">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit User</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <input type="text" name="username"
-                            class="form-control @error('username') is-invalid @enderror"
-                            placeholder="Masukkan username (min 3 karakter)" value="{{ old('username') }}">
+                        <div class="modal-body">
 
-                        @error('username')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
+                            <input type="text" name="username" class="form-control mb-2" value="{{ $user->username }}">
+
+                            <input type="email" name="email" class="form-control mb-2" value="{{ $user->email }}">
+
+                            <input type="password" name="password" class="form-control mb-2"
+                                placeholder="Kosongkan jika tidak diubah">
+
+                            <select name="role" class="form-select mb-2">
+                                <option value="petugas" {{ $user->role == 'petugas' ? 'selected' : '' }}>Petugas</option>
+                                <option value="owner" {{ $user->role == 'owner' ? 'selected' : '' }}>Owner</option>
+                            </select>
+
+                            <select name="shift_id" class="form-select mb-2">
+                                <option value="">-- Pilih Shift --</option>
+                                @foreach ($shifts as $shift)
+                                    <option value="{{ $shift->id }}"
+                                        {{ $user->shift_id == $shift->id ? 'selected' : '' }}>
+                                        {{ $shift->nama_shift }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class="btn btn-primary">Update</button>
+                        </div>
+
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
-                            placeholder="contoh@email.com" value="{{ old('email') }}">
-
-                        @error('email')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" name="password"
-                            class="form-control @error('password') is-invalid @enderror" placeholder="Minimal 6 karakter">
-
-                        @error('password')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Role</label>
-                        <select name="role" class="form-select @error('role') is-invalid @enderror">
-                            <option value="">-- Pilih Role --</option>
-                            <option value="petugas" {{ old('role') == 'petugas' ? 'selected' : '' }}>Petugas</option>
-                            <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>Owner</option>
-                        </select>
-
-                        @error('role')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                </div>
-
-            </form>
-            @if ($errors->any())
-                <script>
-                    var myModal = new bootstrap.Modal(document.getElementById('modalUser'));
-                    myModal.show();
-                </script>
-            @endif
+                </form>
+            </div>
         </div>
-    </div>
+    @endforeach
 
-
+    <!-- DELETE -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.btn-delete').forEach(button => {
-                button.addEventListener('click', function() {
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', function() {
+                let id = this.dataset.id;
 
-                    let id = this.getAttribute('data-id');
-
-                    Swal.fire({
-                        title: 'Yakin hapus?',
-                        text: "Data user akan dihapus permanen!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#696cff',
-                        cancelButtonColor: '#8592a3',
-                        confirmButtonText: 'Ya, hapus!',
-                        cancelButtonText: 'Batal'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            document.getElementById('delete-form-' + id).submit();
-                        }
-                    });
-
+                Swal.fire({
+                    title: 'Yakin hapus user?',
+                    icon: 'warning',
+                    showCancelButton: true
+                }).then((r) => {
+                    if (r.isConfirmed) {
+                        document.getElementById('delete-form-' + id).submit();
+                    }
                 });
             });
         });
     </script>
+
+    <!-- PRINT -->
+    <script>
+        function printTable() {
+            let content = document.getElementById('printArea').innerHTML;
+            let original = document.body.innerHTML;
+
+            document.body.innerHTML = content;
+            window.print();
+            document.body.innerHTML = original;
+            location.reload();
+        }
+    </script>
+
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+
 @endsection
