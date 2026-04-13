@@ -20,6 +20,10 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
+        @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
         @if ($errors->any())
             <div class="alert alert-danger">
                 <ul class="mb-0">
@@ -37,12 +41,14 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Username</label>
-                    <input type="text" name="username" value="{{ old('username') }}" class="form-control" placeholder="Masukan Username">
+                    <input type="text" name="username" value="{{ old('username') }}" class="form-control"
+                        placeholder="Masukan Username">
                 </div>
 
                 <div class="col-md-3">
                     <label class="form-label">Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}" class="form-control" placeholder="Masukan Email">
+                    <input type="email" name="email" value="{{ old('email') }}" class="form-control"
+                        placeholder="Masukan Email">
                 </div>
 
                 <div class="col-md-2">
@@ -54,8 +60,8 @@
                     <label class="form-label">Role</label>
                     <select name="role" class="form-select">
                         <option value="">-- Pilih --</option>
-                        <option value="petugas">Petugas</option>
-                        <option value="owner">Owner</option>
+                        <option value="petugas" {{ old('role') == 'petugas' ? 'selected' : '' }}>Petugas</option>
+                        <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>Owner</option>
                     </select>
                 </div>
 
@@ -64,7 +70,9 @@
                     <select name="shift_id" class="form-select">
                         <option value="">-- Pilih --</option>
                         @foreach ($shifts as $shift)
-                            <option value="{{ $shift->id }}">{{ $shift->nama_shift }}</option>
+                            <option value="{{ $shift->id }}" {{ old('shift_id') == $shift->id ? 'selected' : '' }}>
+                                {{ $shift->nama_shift }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -143,6 +151,7 @@
                                     </form>
 
                                 </td>
+
                             </tr>
                         @empty
                             <tr>
@@ -209,20 +218,24 @@
         </div>
     @endforeach
 
-    <!-- DELETE -->
+    <!-- DELETE SCRIPT (FIXED) -->
     <script>
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', function() {
-                let id = this.dataset.id;
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', function() {
 
-                Swal.fire({
-                    title: 'Yakin hapus user?',
-                    icon: 'warning',
-                    showCancelButton: true
-                }).then((r) => {
-                    if (r.isConfirmed) {
-                        document.getElementById('delete-form-' + id).submit();
-                    }
+                    let id = this.dataset.id;
+
+                    Swal.fire({
+                        title: 'Yakin hapus user?',
+                        icon: 'warning',
+                        showCancelButton: true
+                    }).then((r) => {
+                        if (r.isConfirmed) {
+                            document.getElementById('delete-form-' + id).submit();
+                        }
+                    });
+
                 });
             });
         });

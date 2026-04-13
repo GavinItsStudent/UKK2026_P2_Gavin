@@ -52,7 +52,6 @@
     <script src="{{ asset('assets/js/config.js') }}"></script>
 </head>
 
-{{-- CSS TXT LOGO --}}
 <style>
     .logo-text {
         font-family: 'Poppins', sans-serif;
@@ -63,14 +62,13 @@
 </style>
 
 <body>
-    <!-- Content -->
 
     <div class="position-relative">
         <div class="authentication-wrapper authentication-basic">
             <div class="authentication-inner py-3 mx-4">
-                <!-- Login -->
+                
                 <div class="card p-sm-7 p-2">
-                    <!-- Logo -->
+                    
                     <div class="app-brand justify-content-center mt-2 mb-2">
                         <a href="{{ url('/') }}"
                             class="app-brand-link d-flex flex-column align-items-center gap-2">

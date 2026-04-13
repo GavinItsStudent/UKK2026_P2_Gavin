@@ -17,6 +17,15 @@
 
         <!-- FORM TAMBAH -->
         <div class="card p-3 mb-4">
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $e)
+                            <li>{{ $e }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <form action="{{ route('admin.kendaraan.store') }}" method="POST" class="row g-3 align-items-end">
                 @csrf
 
