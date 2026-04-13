@@ -14,37 +14,44 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
-    ->controller(AdminController::class)
+    ->controller(\App\Http\Controllers\AdminController::class)
     ->group(function () {
 
+        // Dashboard
         Route::get('/dashboard', 'dashboard')->name('dashboard');
 
-        Route::get('/users', 'users')->name('users');
-        Route::post('/users', 'storeUser')->name('users.store');
-        Route::put('/users/{id}', 'updateUser')->name('users.update');
-        Route::delete('/users/{id}', 'destroyUser')->name('users.destroy');
+        // USERS
+        Route::get('/users', [AdminController::class, 'users'])->name('users');
+        Route::post('/users/store', [AdminController::class, 'storeUser'])->name('users.store');
+        Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('users.update');
+        Route::delete('/users/{id}', [AdminController::class, 'destroyUser'])->name('users.destroy');
 
-        Route::get('/shift', 'shiftUser')->name('shift');
-        Route::post('/shift', 'storeShift')->name('shift.store');
-        Route::put('/shift/{id}', 'updateShift')->name('shift.update');
-        Route::delete('/shift/{id}', 'destroyShift')->name('shift.destroy');
+        // SHIFT
+        Route::get('/shift', 'shifts')->name('shifts');
+        Route::post('/shift', 'storeShift')->name('shifts.store');
+        Route::put('/shift/{id}', 'updateShift')->name('shifts.update');
+        Route::delete('/shift/{id}', 'destroyShift')->name('shifts.destroy');
 
-        Route::get('/tarif', 'tarif')->name('tarif');
-        Route::post('/tarif', 'storeTarif')->name('tarif.store');
-        Route::put('/tarif/{id}', 'updateTarif')->name('tarif.update');
-        Route::delete('/tarif/{id}', 'destroyTarif')->name('tarif.destroy');
+        // TARIF
+        Route::get('/tarif', 'tarifs')->name('tarifs');
+        Route::post('/tarif', 'storeTarif')->name('tarifs.store');
+        Route::put('/tarif/{id}', 'updateTarif')->name('tarifs.update');
+        Route::delete('/tarif/{id}', 'destroyTarif')->name('tarifs.destroy');
 
-        Route::get('/area', 'area')->name('area');
-        Route::post('/area', 'storeArea')->name('area.store');
-        Route::put('/area/{id}', 'updateArea')->name('area.update');
-        Route::delete('/area/{id}', 'destroyArea')->name('area.destroy');
+        // AREA
+        Route::get('/area', 'areas')->name('area');
+        Route::post('/area', 'storeArea')->name('areas.store');
+        Route::put('/area/{id}', 'updateArea')->name('areas.update');
+        Route::delete('/area/{id}', 'destroyArea')->name('areas.destroy');
 
-        Route::get('/kendaraan', 'kendaraan')->name('kendaraan');
+        // KENDARAAN
+        Route::get('/kendaraan', 'kendaraans')->name('kendaraan');
         Route::post('/kendaraan', 'storeKendaraan')->name('kendaraan.store');
         Route::put('/kendaraan/{id}', 'updateKendaraan')->name('kendaraan.update');
         Route::delete('/kendaraan/{id}', 'destroyKendaraan')->name('kendaraan.destroy');
 
-        Route::get('/log', 'log')->name('log');
+        // LOG
+        Route::get('/log', 'logs')->name('log');
     });
 
 Route::middleware(['auth', 'role:petugas'])->prefix('petugas')->group(function () {

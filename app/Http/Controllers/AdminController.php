@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+
 use App\Models\Transaksi;
 use App\Models\User;
 use App\Models\AreaParkir;
@@ -9,9 +12,7 @@ use App\Models\Kendaraan;
 use App\Models\LogAktivitas;
 use App\Models\Shift;
 use App\Models\Tarif;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -19,24 +20,40 @@ class AdminController extends Controller
     public function dashboard()
     {
         $today = now()->toDateString();
+        $this->syncArea();
 
-        $parkirAktif = Transaksi::where('status', 'masuk')->count();
+        $parkirAktif = Transaksi::whereIn('status', ['masuk', 'menunggu_pembayaran'])->count();
         $totalTransaksi = Transaksi::whereDate('created_at', $today)->count();
         $pendapatanHariIni = Transaksi::whereDate('created_at', $today)->sum('biaya_bayar');
-
-        $this->syncArea();
 
         $areas = AreaParkir::all();
         $totalKapasitas = AreaParkir::sum('kapasitas');
         $totalTerisi = AreaParkir::sum('terisi');
 
-        $logs = LogAktivitas::with('user')->latest('waktu_aktivitas')->take(5)->get();
-
-        $chart = Transaksi::selectRaw('DATE(created_at) as tanggal, SUM(biaya_bayar) as total')
-            ->groupBy('tanggal')
-            ->orderBy('tanggal', 'asc')
-            ->limit(7)
+        $logs = LogAktivitas::with('user')
+            ->latest('waktu_aktivitas')
+            ->take(5)
             ->get();
+
+        // ================= CHART 7 HARI TANPA BOLONG =================
+        $rawChart = Transaksi::selectRaw('DATE(created_at) as tanggal, SUM(biaya_bayar) as total')
+            ->whereDate('created_at', '>=', now()->subDays(6))
+            ->groupBy('tanggal')
+            ->orderBy('tanggal')
+            ->get()
+            ->keyBy('tanggal');
+
+        $chart = collect();
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::today()->subDays($i)->toDateString();
+
+            $chart->push([
+                'tanggal' => Carbon::parse($date)->translatedFormat('d M'),
+                'total' => $rawChart[$date]->total ?? 0
+            ]);
+        }
+        // =============================================================
 
         return view('Main.admin', compact(
             'parkirAktif',
@@ -50,15 +67,14 @@ class AdminController extends Controller
         ));
     }
 
-    /* ================= SYNC AREA ================= */
     private function syncArea()
     {
         foreach (AreaParkir::all() as $area) {
-            $real = Kendaraan::where('area_id', $area->id)->count();
+            $real = Transaksi::where('area_id', $area->id)
+                ->whereIn('status', ['masuk', 'menunggu_pembayaran'])
+                ->count();
 
-            if ($area->terisi != $real) {
-                $area->update(['terisi' => $real]);
-            }
+            $area->update(['terisi' => $real]);
         }
     }
 
@@ -68,109 +84,90 @@ class AdminController extends Controller
         $users = User::with('shift')
             ->where('role', '!=', 'admin')
             ->latest()
-            ->get();
+            ->paginate(10);
 
         $shifts = Shift::all();
 
         return view('admin.user', compact('users', 'shifts'));
     }
 
-    public function storeUser(Request $request)
+    public function storeUser(Request $r)
     {
-        $request->validate([
+        $r->validate([
             'username' => 'required|unique:users,username',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
             'role' => 'required|in:petugas,owner',
+            'shift_id' => 'nullable|exists:shifts,id'
         ]);
 
-        $user = User::create([
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'shift_id' => $request->shift_id,
-            'status_aktif' => 1
-        ]);
-
-        LogAktivitas::create([
-            'user_id' => auth()->id(),
-            'aktivitas' => 'Tambah user: ' . $user->username,
-            'waktu_aktivitas' => now()
+        User::create([
+            'username' => $r->username,
+            'email' => $r->email,
+            'password' => Hash::make($r->password),
+            'role' => $r->role,
+            'shift_id' => $r->shift_id,
+            'status_aktif' => 0
         ]);
 
         return back()->with('success', 'User berhasil ditambahkan');
     }
 
-    public function updateUser(Request $request, $id)
+    public function updateUser(Request $r, $id)
     {
-        $user = User::findOrFail($id);
-
-        $request->validate([
+        $r->validate([
             'username' => 'required|unique:users,username,' . $id,
             'email' => 'required|email|unique:users,email,' . $id,
             'role' => 'required|in:petugas,owner',
+            'shift_id' => 'nullable|exists:shifts,id'
         ]);
 
-        $data = [
-            'username' => $request->username,
-            'email' => $request->email,
-            'role' => $request->role,
-            'shift_id' => $request->shift_id
-        ];
+        $data = $r->only('username', 'email', 'role', 'shift_id');
 
-        if ($request->password) {
-            $data['password'] = Hash::make($request->password);
+        if ($r->filled('password')) {
+            $data['password'] = Hash::make($r->password);
         }
 
-        $user->update($data);
+        User::findOrFail($id)->update($data);
 
         return back()->with('success', 'User berhasil diupdate');
     }
 
     public function destroyUser($id)
     {
-        $user = User::findOrFail($id);
-
-        if ($user->role == 'admin') {
-            return back()->with('error', 'Admin tidak bisa dihapus');
-        }
-
-        $user->delete();
-
+        User::findOrFail($id)->delete();
         return back()->with('success', 'User berhasil dihapus');
     }
 
     /* ================= SHIFT ================= */
-    public function shiftUser()
+    public function shifts()
     {
-        $shifts = Shift::latest()->get();
+        $shifts = Shift::latest()->paginate(10);
         return view('admin.shift', compact('shifts'));
     }
 
-    public function storeShift(Request $request)
+    public function storeShift(Request $r)
     {
-        $request->validate([
+        $r->validate([
             'nama_shift' => 'required',
             'jam_masuk' => 'required',
             'jam_keluar' => 'required',
         ]);
 
-        Shift::create($request->only('nama_shift', 'jam_masuk', 'jam_keluar'));
+        Shift::create($r->only('nama_shift', 'jam_masuk', 'jam_keluar'));
 
         return back()->with('success', 'Shift berhasil ditambahkan');
     }
 
-    public function updateShift(Request $request, $id)
+    public function updateShift(Request $r, $id)
     {
-        $request->validate([
+        $r->validate([
             'nama_shift' => 'required',
             'jam_masuk' => 'required',
             'jam_keluar' => 'required',
         ]);
 
-        Shift::findOrFail($id)
-            ->update($request->only('nama_shift', 'jam_masuk', 'jam_keluar'));
+        Shift::findOrFail($id)->update($r->only('nama_shift', 'jam_masuk', 'jam_keluar'));
 
         return back()->with('success', 'Shift berhasil diupdate');
     }
@@ -182,36 +179,36 @@ class AdminController extends Controller
     }
 
     /* ================= TARIF ================= */
-    public function tarif()
+    public function tarifs()
     {
-        $tarif = Tarif::latest()->get();
+        $tarif = Tarif::latest()->paginate(10);
         return view('admin.tarif', compact('tarif'));
     }
 
-    public function storeTarif(Request $request)
+    public function storeTarif(Request $r)
     {
-        $request->validate([
+        $r->validate([
             'jenis_kendaraan' => 'required|in:motor,mobil',
             'tarif_per_jam' => 'required|numeric'
         ]);
 
-        Tarif::create($request->only('jenis_kendaraan', 'tarif_per_jam'));
+        Tarif::create($r->only('jenis_kendaraan', 'tarif_per_jam'));
 
         return back()->with('success', 'Tarif berhasil ditambahkan');
     }
 
-    public function updateTarif(Request $request, $id)
+    public function updateTarif(Request $r, $id)
     {
-        $request->validate([
+        $r->validate([
             'jenis_kendaraan' => 'required|in:motor,mobil',
             'tarif_per_jam' => 'required|numeric'
         ]);
 
-        Tarif::findOrFail($id)
-            ->update($request->only('jenis_kendaraan', 'tarif_per_jam'));
+        Tarif::findOrFail($id)->update($r->only('jenis_kendaraan', 'tarif_per_jam'));
 
         return back()->with('success', 'Tarif berhasil diupdate');
     }
+
 
     public function destroyTarif($id)
     {
@@ -219,125 +216,135 @@ class AdminController extends Controller
         return back()->with('success', 'Tarif berhasil dihapus');
     }
 
-    /* ================= AREA ================= */
-    public function area()
+    public function areas()
     {
-        $this->syncArea();
-        $areas = AreaParkir::all();
+        $areas = AreaParkir::latest()->get();
 
         return view('admin.area', compact('areas'));
     }
 
-    /* ================= KENDARAAN ================= */
-    public function kendaraan(Request $request)
+    public function storeArea(Request $r)
     {
-        $this->syncArea();
+        $r->validate([
+            'nama_area' => 'required|string|max:100',
+            'kapasitas' => 'required|integer|min:1',
+        ]);
 
-        $query = Kendaraan::with(['area', 'user']);
+        AreaParkir::create([
+            'nama_area' => $r->nama_area,
+            'kapasitas' => $r->kapasitas,
+            'terisi' => 0,
+        ]);
 
-        if ($request->search) {
-            $query->where('plat_nomor', 'like', '%' . $request->search . '%');
-        }
+        return back()->with('success', 'Area parkir berhasil ditambahkan');
+    }
 
-        $kendaraans = $query->latest()->paginate(10);
+    public function destroyArea($id)
+    {
+        $area = AreaParkir::findOrFail($id);
+        $area->delete();
 
-        $areas = AreaParkir::all()->map(function ($a) {
-            $a->sisa = $a->kapasitas - $a->terisi;
-            return $a;
-        });
+        return back()->with('success', 'Area parkir berhasil dihapus');
+    }
+
+    public function updateArea(Request $r, $id)
+    {
+        $r->validate([
+            'nama_area' => 'required|string|max:100',
+            'kapasitas' => 'required|numeric|min:1',
+        ]);
+
+        $area = AreaParkir::findOrFail($id);
+
+        $area->update([
+            'nama_area' => $r->nama_area,
+            'kapasitas' => $r->kapasitas,
+        ]);
+
+        return back()->with('success', 'Area parkir berhasil diupdate');
+    }
+
+    public function kendaraans()
+    {
+        $kendaraans = Kendaraan::with('area')->latest()->paginate(10);
+
+        $areas = AreaParkir::all();
 
         return view('admin.kendaraan', compact('kendaraans', 'areas'));
     }
 
-    public function storeKendaraan(Request $request)
+    public function storeKendaraan(Request $r)
     {
-        try {
-            DB::transaction(function () use ($request) {
-
-                $area = AreaParkir::lockForUpdate()->find($request->area_id);
-
-                if ($area->terisi >= $area->kapasitas) {
-                    throw new \Exception('Area penuh');
-                }
-
-                Kendaraan::create([
-                    'plat_nomor' => strtoupper($request->plat_nomor),
-                    'jenis_kendaraan' => $request->jenis_kendaraan,
-                    'warna' => $request->warna,
-                    'area_id' => $request->area_id,
-                    'user_id' => auth()->id()
-                ]);
-
-                $area->increment('terisi');
-            });
-
-            return back()->with('success', 'Kendaraan ditambahkan');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
-
-    public function updateKendaraan(Request $request, $id)
-    {
-        $kendaraan = Kendaraan::findOrFail($id);
-
-        $request->validate([
-            'plat_nomor' => 'required|max:15',
+        $r->validate([
+            'plat_nomor' => 'required|unique:kendaraan,plat_nomor', // 🔥 FIX INI
             'jenis_kendaraan' => 'required|in:motor,mobil',
             'warna' => 'required',
-            'area_id' => 'required|exists:area_parkir,id'
+            'area_id' => 'required|exists:area_parkir,id',
         ]);
 
-        DB::transaction(function () use ($request, $kendaraan) {
+        $area = AreaParkir::findOrFail($r->area_id);
 
-            $old = AreaParkir::lockForUpdate()->find($kendaraan->area_id);
-            $new = AreaParkir::lockForUpdate()->find($request->area_id);
+        // cek kapasitas
+        if ($area->terisi >= $area->kapasitas) {
+            return back()->with('error', 'Area parkir penuh');
+        }
 
-            if ($old->id != $new->id) {
+        Kendaraan::create([
+            'plat_nomor' => $r->plat_nomor,
+            'jenis_kendaraan' => $r->jenis_kendaraan,
+            'warna' => $r->warna,
+            'area_id' => $r->area_id,
+            'user_id' => auth()->id(), // 🔥 FIX
+        ]);
 
-                if ($new->terisi >= $new->kapasitas) {
-                    throw new \Exception('Area penuh');
-                }
+        // update terisi area
+        $area->increment('terisi');
 
-                $old->decrement('terisi');
-                $new->increment('terisi');
-            }
+        return back()->with('success', 'Kendaraan berhasil ditambahkan');
+    }
 
-            $kendaraan->update([
-                'plat_nomor' => strtoupper($request->plat_nomor),
-                'jenis_kendaraan' => $request->jenis_kendaraan,
-                'warna' => $request->warna,
-                'area_id' => $request->area_id,
-            ]);
-        });
+    public function updateKendaraan(Request $r, $id)
+    {
+        $r->validate([
+            'plat_nomor' => 'required|unique:kendaraan,plat_nomor,' . $id,
+            'jenis_kendaraan' => 'required|in:motor,mobil',
+            'warna' => 'required',
+            'area_id' => 'required|exists:area_parkir,id',
+        ]);
+
+        $kendaraan = Kendaraan::findOrFail($id);
+
+        $kendaraan->update([
+            'plat_nomor' => $r->plat_nomor,
+            'jenis_kendaraan' => $r->jenis_kendaraan,
+            'warna' => $r->warna,
+            'area_id' => $r->area_id,
+            'user_id' => auth()->id(),
+        ]);
 
         return back()->with('success', 'Kendaraan berhasil diupdate');
     }
 
     public function destroyKendaraan($id)
     {
-        DB::transaction(function () use ($id) {
+        $kendaraan = Kendaraan::findOrFail($id);
 
-            $k = Kendaraan::findOrFail($id);
+        // opsional: kurangi terisi area
+        if ($kendaraan->area_id) {
+            AreaParkir::find($kendaraan->area_id)?->decrement('terisi');
+        }
 
-            if ($k->area_id) {
-                AreaParkir::lockForUpdate()
-                    ->find($k->area_id)
-                    ->decrement('terisi');
-            }
-
-            $k->delete();
-        });
+        $kendaraan->delete();
 
         return back()->with('success', 'Kendaraan berhasil dihapus');
     }
 
-    /* ================= LOG ================= */
-    public function log()
+    public function logs()
     {
         $logs = LogAktivitas::with('user')
-            ->orderBy('waktu_aktivitas', 'desc')
-            ->get();
+            ->latest('waktu_aktivitas')
+            ->paginate(10);
+
         return view('admin.log', compact('logs'));
     }
 }

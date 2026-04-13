@@ -2,12 +2,23 @@
 
 @section('content')
     <style>
-        input[readonly] {
-            background-color: #f1f1f1;
-            cursor: not-allowed;
-        }
-
         @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #printOnly,
+            #printOnly * {
+                visibility: visible;
+            }
+
+            #printOnly {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
             .no-print {
                 display: none !important;
             }
@@ -16,65 +27,50 @@
 
     <div class="container-xxl container-p-y">
 
-        <!-- HEADER -->
+        {{-- HEADER --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h4 class="fw-bold mb-0">Kelola Tarif Parkir</h4>
                 <small class="text-muted">Manajemen tarif kendaraan</small>
             </div>
 
-            <button onclick="printTable()" class="btn btn-outline-secondary">
+            <button onclick="printTarif()" class="btn btn-outline-secondary no-print">
                 <i class="ri-printer-line me-1"></i> Print
             </button>
         </div>
 
-        <!-- ALERT -->
         @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success no-print">{{ session('success') }}</div>
         @endif
 
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $e)
-                        <li>{{ $e }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <!-- FORM TAMBAH -->
-        <div class="card p-3 mb-4">
-            <form action="{{ route('admin.tarif.store') }}" method="POST" class="row g-3 align-items-end">
+        {{-- FORM TAMBAH --}}
+        <div class="card p-3 mb-4 no-print">
+            <form action="{{ route('admin.tarifs.store') }}" method="POST" class="row g-3">
                 @csrf
 
                 <div class="col-md-4">
-                    <label class="form-label">Jenis Kendaraan</label>
-                    <select name="jenis_kendaraan" class="form-select">
-                        <option value="">-- Pilih --</option>
-                        <option value="motor" {{ old('jenis_kendaraan') == 'motor' ? 'selected' : '' }}>Motor</option>
-                        <option value="mobil" {{ old('jenis_kendaraan') == 'mobil' ? 'selected' : '' }}>Mobil</option>
+                    <select name="jenis_kendaraan" class="form-select" required>
+                        <option value="">Pilih jenis kendaraan</option>
+                        <option value="motor">Motor</option>
+                        <option value="mobil">Mobil</option>
                     </select>
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label">Harga / Jam</label>
-                    <input type="text" name="tarif_per_jam" value="{{ old('tarif_per_jam') }}"
-                        class="form-control rupiah" placeholder="Contoh: Rp 2.000">
+                    <input type="text" id="rupiahAdd" class="form-control" placeholder="Contoh: Rp 2.000" required>
+                    <input type="hidden" name="tarif_per_jam" id="realAdd">
                 </div>
 
                 <div class="col-md-4 d-grid">
-                    <label class="form-label invisible">Button</label>
                     <button class="btn btn-primary">
-                        <i class="ri-add-line me-1"></i> Tambah
+                        <i class="ri-add-line"></i> Tambah Tarif
                     </button>
                 </div>
-
             </form>
         </div>
 
-        <!-- TABLE -->
-        <div class="card" id="print-area">
+        {{-- TABLE --}}
+        <div class="card" id="printArea">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
@@ -84,79 +80,28 @@
                             <th class="text-end no-print">Aksi</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         @forelse ($tarif as $t)
                             <tr>
-                                <td class="text-capitalize">{{ $t->jenis_kendaraan }}</td>
-                                <td><strong>Rp {{ number_format($t->tarif_per_jam, 0, ',', '.') }}</strong></td>
-
+                                <td class="text-capitalize"><b>{{ $t->jenis_kendaraan }}</b></td>
+                                <td><b>Rp {{ number_format($t->tarif_per_jam, 0, ',', '.') }}</b></td>
                                 <td class="text-end no-print">
-
-                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                                        data-bs-target="#editTarif{{ $t->id }}">
+                                    <button class="btn btn-sm btn-warning btn-edit" data-id="{{ $t->id }}"
+                                        data-jenis="{{ $t->jenis_kendaraan }}" data-tarif="{{ $t->tarif_per_jam }}"
+                                        data-bs-toggle="modal" data-bs-target="#editModal">
                                         <i class="ri-pencil-line"></i>
                                     </button>
 
-                                    <button class="btn btn-sm btn-danger btn-delete" data-id="{{ $t->id }}">
-                                        <i class="ri-delete-bin-line"></i>
-                                    </button>
-
-                                    <form id="delete-tarif-{{ $t->id }}"
-                                        action="{{ route('admin.tarif.destroy', $t->id) }}" method="POST"
-                                        style="display:none;">
-                                        @csrf
-                                        @method('DELETE')
+                                    <form action="{{ route('admin.tarifs.destroy', $t->id) }}" method="POST"
+                                        class="d-inline">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Yakin hapus tarif?')">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
                                     </form>
-
                                 </td>
                             </tr>
-
-                            <!-- MODAL EDIT -->
-                            <div class="modal fade" id="editTarif{{ $t->id }}">
-                                <div class="modal-dialog">
-                                    <form action="{{ route('admin.tarif.update', $t->id) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-
-                                        <div class="modal-content">
-
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Edit Tarif</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-
-                                            <div class="modal-body">
-
-                                                <div class="mb-3">
-                                                    <label>Jenis Kendaraan</label>
-                                                    <input type="text" class="form-control"
-                                                        value="{{ ucfirst($t->jenis_kendaraan) }}" readonly>
-                                                    <input type="hidden" name="jenis_kendaraan"
-                                                        value="{{ $t->jenis_kendaraan }}">
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <label>Harga / Jam</label>
-                                                    <input type="text" class="form-control rupiah"
-                                                        value="Rp {{ number_format($t->tarif_per_jam, 0, ',', '.') }}">
-                                                </div>
-
-                                                <!-- VALUE ASLI -->
-                                                <input type="hidden" name="tarif_per_jam"
-                                                    id="realTarif{{ $t->id }}" value="{{ $t->tarif_per_jam }}">
-
-                                            </div>
-
-                                            <div class="modal-footer">
-                                                <button class="btn btn-primary">Update</button>
-                                            </div>
-
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-
                         @empty
                             <tr>
                                 <td colspan="3" class="text-center text-muted">
@@ -165,70 +110,106 @@
                             </tr>
                         @endforelse
                     </tbody>
-
                 </table>
             </div>
         </div>
 
     </div>
 
-    <!-- DELETE -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    let id = this.dataset.id;
+    {{-- MODAL EDIT (SATU SAJA) --}}
+    <div class="modal fade" id="editModal">
+        <div class="modal-dialog">
+            <form id="editForm" method="POST">
+                @csrf
+                @method('PUT')
 
-                    Swal.fire({
-                        title: 'Yakin hapus?',
-                        text: "Data tarif akan dihapus!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Ya, hapus!'
-                    }).then((r) => {
-                        if (r.isConfirmed) {
-                            document.getElementById('delete-tarif-' + id).submit();
-                        }
-                    });
-                });
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5>Edit Tarif</h5>
+                        <button class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="text" id="editJenis" class="form-control mb-3" readonly>
+
+                        <input type="text" id="rupiahEdit" class="form-control" placeholder="Masukkan tarif baru"
+                            required>
+
+                        <input type="hidden" name="jenis_kendaraan" id="realJenis">
+                        <input type="hidden" name="tarif_per_jam" id="realEdit">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-primary">Update</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="printOnly"></div>
+
+    <script>
+        function formatRupiah(input, hidden) {
+            input.addEventListener('input', function() {
+                let angka = this.value.replace(/[^0-9]/g, '');
+                this.value = angka ? 'Rp ' + new Intl.NumberFormat('id-ID').format(angka) : '';
+                hidden.value = angka;
+            });
+        }
+
+        // ADD
+        formatRupiah(
+            document.getElementById('rupiahAdd'),
+            document.getElementById('realAdd')
+        );
+
+        // EDIT
+        formatRupiah(
+            document.getElementById('rupiahEdit'),
+            document.getElementById('realEdit')
+        );
+
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                let id = this.dataset.id;
+
+                editForm.action =
+                    "{{ route('admin.tarifs.update', ':id') }}".replace(':id', id);
+                editJenis.value = this.dataset.jenis;
+                realJenis.value = this.dataset.jenis;
+
+                let tarif = this.dataset.tarif;
+                rupiahEdit.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(tarif);
+                realEdit.value = tarif;
             });
         });
-    </script>
 
-    <!-- FORMAT RUPIAH + FIX VALUE -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        function printTarif() {
+            let rows = document.querySelectorAll('#printArea tbody tr');
 
-            document.querySelectorAll('.rupiah').forEach(input => {
+            let content = `
+    <h3 style="text-align:center;margin-bottom:20px;">Laporan Data Tarif Parkir</h3>
+    <table border="1" cellspacing="0" cellpadding="8" width="100%">
+    <tr>
+        <th>Jenis Kendaraan</th>
+        <th>Harga / Jam</th>
+    </tr>`;
 
-                input.addEventListener('input', function() {
-
-                    let angka = this.value.replace(/[^0-9]/g, '');
-                    let format = new Intl.NumberFormat('id-ID').format(angka);
-
-                    this.value = angka ? 'Rp ' + format : '';
-
-                    // cari hidden input terdekat
-                    let hidden = this.closest('form')?.querySelector(
-                        'input[type=hidden][name=tarif_per_jam]');
-                    if (hidden) hidden.value = angka;
-                });
-
+            rows.forEach(row => {
+                let cols = row.querySelectorAll('td');
+                if (cols.length >= 2) {
+                    content += `<tr>
+                <td>${cols[0].innerText}</td>
+                <td>${cols[1].innerText}</td>
+            </tr>`;
+                }
             });
 
-        });
-    </script>
-
-    <!-- PRINT -->
-    <script>
-        function printTable() {
-            let content = document.getElementById('print-area').innerHTML;
-            let original = document.body.innerHTML;
-
-            document.body.innerHTML = content;
+            content += `</table>`;
+            printOnly.innerHTML = content;
             window.print();
-            document.body.innerHTML = original;
-            location.reload();
+            printOnly.innerHTML = '';
         }
     </script>
 @endsection

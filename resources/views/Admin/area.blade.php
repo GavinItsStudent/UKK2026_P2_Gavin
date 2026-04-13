@@ -41,7 +41,7 @@
 
         <!-- FORM TAMBAH -->
         <div class="card p-3 mb-4">
-            <form action="{{ route('admin.area.store') }}" method="POST" class="row g-3 align-items-end">
+            <form action="{{ route('admin.areas.store') }}" method="POST" class="row g-3 align-items-end">
                 @csrf
 
                 <div class="col-md-4">
@@ -119,7 +119,7 @@
                                     </button>
 
                                     <form id="delete-area-{{ $area->id }}"
-                                        action="{{ route('admin.area.destroy', $area->id) }}" method="POST"
+                                        action="{{ route('admin.areas.destroy', $area->id) }}" method="POST"
                                         style="display:none;">
                                         @csrf
                                         @method('DELETE')
@@ -131,7 +131,7 @@
                             <!-- MODAL EDIT -->
                             <div class="modal fade" id="editArea{{ $area->id }}">
                                 <div class="modal-dialog">
-                                    <form action="{{ route('admin.area.update', $area->id) }}" method="POST">
+                                    <form action="{{ route('admin.areas.update', $area->id) }}" method="POST">
                                         @csrf
                                         @method('PUT')
 

@@ -3,163 +3,112 @@
 @section('content')
     <div class="container-xxl container-p-y">
 
-        <!-- HEADER -->
+        {{-- HEADER --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h4 class="fw-bold mb-0">Kelola User</h4>
                 <small class="text-muted">Manajemen pengguna sistem</small>
             </div>
 
-            <button onclick="printTable()" class="btn btn-outline-secondary">
-                <i class="ri-printer-line me-1"></i> Print
-            </button>
+            <div class="d-flex gap-2 no-print">
+                <select id="printRole" class="form-select">
+                    <option value="all">Semua Role</option>
+                    <option value="petugas">Petugas</option>
+                    <option value="owner">Owner</option>
+                </select>
+                <button onclick="printUsers()" class="btn btn-outline-secondary">
+                    Print
+                </button>
+            </div>
         </div>
 
-        <!-- ALERT -->
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
-        @endif
-
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $e)
-                        <li>{{ $e }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <!-- FORM TAMBAH -->
-        <div class="card p-3 mb-4">
+        {{-- FORM TAMBAH --}}
+        <div class="card p-3 mb-4 no-print">
             <form action="{{ route('admin.users.store') }}" method="POST" class="row g-3">
                 @csrf
-
                 <div class="col-md-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" name="username" value="{{ old('username') }}" class="form-control"
-                        placeholder="Masukan Username">
+                    <input type="text" name="username" class="form-control" placeholder="Masukkan username" required>
                 </div>
-
                 <div class="col-md-3">
-                    <label class="form-label">Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}" class="form-control"
-                        placeholder="Masukan Email">
+                    <input type="email" name="email" class="form-control" placeholder="Masukkan email" required>
                 </div>
-
                 <div class="col-md-2">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" placeholder="Masukan Password">
+                    <input type="password" name="password" class="form-control" placeholder="Masukkan password" required>
                 </div>
-
                 <div class="col-md-2">
-                    <label class="form-label">Role</label>
-                    <select name="role" class="form-select">
-                        <option value="">-- Pilih --</option>
-                        <option value="petugas" {{ old('role') == 'petugas' ? 'selected' : '' }}>Petugas</option>
-                        <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>Owner</option>
+                    <select name="role" class="form-select" required>
+                        <option value="">Pilih Role</option>
+                        <option value="petugas">Petugas</option>
+                        <option value="owner">Owner</option>
                     </select>
                 </div>
-
                 <div class="col-md-2">
-                    <label class="form-label">Shift</label>
                     <select name="shift_id" class="form-select">
-                        <option value="">-- Pilih --</option>
+                        <option value="">Pilih Shift</option>
                         @foreach ($shifts as $shift)
-                            <option value="{{ $shift->id }}" {{ old('shift_id') == $shift->id ? 'selected' : '' }}>
-                                {{ $shift->nama_shift }}
-                            </option>
+                            <option value="{{ $shift->id }}">{{ $shift->nama_shift }}</option>
                         @endforeach
                     </select>
                 </div>
-
                 <div class="col-12 text-end">
-                    <button class="btn btn-primary px-4">
-                        <i class="ri-add-line me-1"></i> Tambah
-                    </button>
+                    <button class="btn btn-primary">Tambah User</button>
                 </div>
             </form>
         </div>
 
-        <!-- TABLE -->
+        {{-- TABLE --}}
         <div class="card" id="printArea">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
-                            <th>User</th>
+                            <th>Username</th>
+                            <th>Email</th>
                             <th>Role</th>
                             <th>Shift</th>
                             <th>Status</th>
                             <th class="text-end no-print">Aksi</th>
                         </tr>
                     </thead>
-
                     <tbody>
-                        @forelse ($users as $user)
-                            <tr>
-
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($user->username) }}"
-                                            class="rounded-circle me-2" width="35">
-                                        <div>
-                                            <b>{{ $user->username }}</b><br>
-                                            <small>{{ $user->email }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <td>
-                                    <span class="badge bg-info text-dark">
-                                        {{ ucfirst($user->role) }}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    {{ optional($user->shift)->nama_shift ?? '-' }}
-                                </td>
-
+                        @foreach ($users as $user)
+                            <tr data-role="{{ $user->role }}">
+                                <td><b>{{ $user->username }}</b></td>
+                                <td>{{ $user->email }}</td>
+                                <td>{{ ucfirst($user->role) }}</td>
+                                <td>{{ optional($user->shift)->nama_shift ?? '-' }}</td>
                                 <td>
                                     @if ($user->status_aktif)
-                                        <span class="badge bg-success">Active</span>
+                                        <span class="badge bg-success">Online</span>
                                     @else
-                                        <span class="badge bg-secondary">Inactive</span>
+                                        <span class="badge bg-secondary">Offline</span>
                                     @endif
                                 </td>
-
                                 <td class="text-end no-print">
-
-                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                                        data-bs-target="#editUser{{ $user->id }}">
-                                        <i class="ri-pencil-line"></i>
+                                    <button type="button" class="btn btn-sm btn-warning btn-edit"
+                                        data-id="{{ $user->id }}" data-username="{{ $user->username }}"
+                                        data-email="{{ $user->email }}" data-role="{{ $user->role }}"
+                                        data-shift="{{ $user->shift_id }}" data-bs-toggle="modal"
+                                        data-bs-target="#editModal">
+                                        Edit
                                     </button>
 
-                                    <button class="btn btn-sm btn-danger btn-delete" data-id="{{ $user->id }}">
-                                        <i class="ri-delete-bin-line"></i>
-                                    </button>
-
-                                    <form id="delete-form-{{ $user->id }}"
-                                        action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
-                                        style="display:none;">
+                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
+                                        class="d-inline">
                                         @csrf
                                         @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Yakin hapus user?')">
+                                            Hapus
+                                        </button>
                                     </form>
-
-                                </td>
-
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">
-                                    Tidak ada data user
                                 </td>
                             </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
@@ -167,99 +116,122 @@
 
     </div>
 
-    <!-- MODAL EDIT -->
-    @foreach ($users as $user)
-        <div class="modal fade" id="editUser{{ $user->id }}">
-            <div class="modal-dialog">
-                <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-
-                    <div class="modal-content">
-
-                        <div class="modal-header">
-                            <h5 class="modal-title">Edit User</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-
-                        <div class="modal-body">
-
-                            <input type="text" name="username" class="form-control mb-2" value="{{ $user->username }}">
-
-                            <input type="email" name="email" class="form-control mb-2" value="{{ $user->email }}">
-
-                            <input type="password" name="password" class="form-control mb-2"
-                                placeholder="Kosongkan jika tidak diubah">
-
-                            <select name="role" class="form-select mb-2">
-                                <option value="petugas" {{ $user->role == 'petugas' ? 'selected' : '' }}>Petugas</option>
-                                <option value="owner" {{ $user->role == 'owner' ? 'selected' : '' }}>Owner</option>
-                            </select>
-
-                            <select name="shift_id" class="form-select mb-2">
-                                <option value="">-- Pilih Shift --</option>
-                                @foreach ($shifts as $shift)
-                                    <option value="{{ $shift->id }}"
-                                        {{ $user->shift_id == $shift->id ? 'selected' : '' }}>
-                                        {{ $shift->nama_shift }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                        </div>
-
-                        <div class="modal-footer">
-                            <button class="btn btn-primary">Update</button>
-                        </div>
-
+    {{-- MODAL EDIT --}}
+    <div class="modal fade" id="editModal">
+        <div class="modal-dialog">
+            <form id="editForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5>Edit User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                </form>
-            </div>
+                    <div class="modal-body">
+                        <input type="text" name="username" id="editUsername" class="form-control mb-2"
+                            placeholder="Masukkan username" required>
+                        <input type="email" name="email" id="editEmail" class="form-control mb-2"
+                            placeholder="Masukkan email" required>
+                        <input type="password" name="password" class="form-control mb-2"
+                            placeholder="Kosongkan jika tidak diubah">
+
+                        <select name="role" id="editRole" class="form-select mb-2">
+                            <option value="petugas">Petugas</option>
+                            <option value="owner">Owner</option>
+                        </select>
+
+                        <select name="shift_id" id="editShift" class="form-select">
+                            <option value="">Pilih Shift</option>
+                            @foreach ($shifts as $shift)
+                                <option value="{{ $shift->id }}">{{ $shift->nama_shift }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary">Update</button>
+                    </div>
+                </div>
+            </form>
         </div>
-    @endforeach
+    </div>
 
-    <!-- DELETE SCRIPT (FIXED) -->
+    <div id="printOnly"></div>
+
     <script>
+        function printUsers() {
+            let role = document.getElementById('printRole').value;
+            let rows = document.querySelectorAll('#printArea tbody tr');
+
+            let content = `
+        <h3 style="text-align:center;margin-bottom:20px;">Laporan Data User (${role.toUpperCase()})</h3>
+        <table border="1" cellspacing="0" cellpadding="8" width="100%">
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Shift</th>
+            <th>Status</th>
+        </tr>`;
+
+            rows.forEach(row => {
+                if (role === 'all' || row.dataset.role === role) {
+                    let cols = row.querySelectorAll('td');
+                    content += `<tr>
+                <td>${cols[0].innerText}</td>
+                <td>${cols[1].innerText}</td>
+                <td>${cols[2].innerText}</td>
+                <td>${cols[3].innerText}</td>
+                <td>${cols[4].innerText}</td>
+            </tr>`;
+                }
+            });
+
+            content += `</table>`;
+
+            let printDiv = document.getElementById('printOnly');
+            printDiv.innerHTML = content;
+            window.print();
+            printDiv.innerHTML = '';
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.btn-delete').forEach(btn => {
+            const editForm = document.getElementById('editForm');
+
+            document.querySelectorAll('.btn-edit').forEach(btn => {
                 btn.addEventListener('click', function() {
-
                     let id = this.dataset.id;
+                    editForm.action = `/admin/users/${id}`;
 
-                    Swal.fire({
-                        title: 'Yakin hapus user?',
-                        icon: 'warning',
-                        showCancelButton: true
-                    }).then((r) => {
-                        if (r.isConfirmed) {
-                            document.getElementById('delete-form-' + id).submit();
-                        }
-                    });
-
+                    editUsername.value = this.dataset.username;
+                    editEmail.value = this.dataset.email;
+                    editRole.value = this.dataset.role;
+                    editShift.value = this.dataset.shift ?? '';
                 });
             });
         });
     </script>
 
-    <!-- PRINT -->
-    <script>
-        function printTable() {
-            let content = document.getElementById('printArea').innerHTML;
-            let original = document.body.innerHTML;
-
-            document.body.innerHTML = content;
-            window.print();
-            document.body.innerHTML = original;
-            location.reload();
-        }
-    </script>
-
     <style>
         @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #printOnly,
+            #printOnly * {
+                visibility: visible;
+            }
+
+            #printOnly {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
             .no-print {
                 display: none !important;
             }
         }
     </style>
-
 @endsection

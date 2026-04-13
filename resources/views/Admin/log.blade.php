@@ -32,8 +32,9 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        <!-- TABLE -->
+        <!-- TABLE CARD -->
         <div class="card" id="print-area">
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
@@ -87,6 +88,12 @@
 
                 </table>
             </div>
+
+    
+            <div class="p-3">
+                {{ $logs->withQueryString()->links() }}
+            </div>
+
         </div>
 
     </div>

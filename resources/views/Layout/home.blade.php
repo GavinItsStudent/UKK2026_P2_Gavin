@@ -89,14 +89,14 @@
                                 <div data-i18n="Kelola Data User">Kelola Data User</div>
                             </a>
                         </li>
-                        <li class="menu-item {{ request()->routeIs('admin.shift') ? 'active' : '' }}">
-                            <a href="{{ route('admin.shift') }}" class="menu-link">
+                        <li class="menu-item {{ request()->routeIs('admin.shifts') ? 'active' : '' }}">
+                            <a href="{{ route('admin.shifts') }}" class="menu-link">
                                 <i class="menu-icon ri ri-timer-line"></i>
                                 <div data-i18n="Kelola Shift">Kelola Shift</div>
                             </a>
                         </li>
-                        <li class="menu-item {{ request()->routeIs('admin.tarif') ? 'active' : '' }}">
-                            <a href="{{ route('admin.tarif') }}" class="menu-link">
+                        <li class="menu-item {{ request()->routeIs('admin.tarifs') ? 'active' : '' }}">
+                            <a href="{{ route('admin.tarifs') }}" class="menu-link">
                                 <i class="menu-icon ri ri-money-dollar-box-line"></i>
                                 <div data-i18n="Kelola Tarif">Kelola Tarif</div>
                             </a>

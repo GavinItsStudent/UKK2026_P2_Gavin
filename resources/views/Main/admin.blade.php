@@ -3,16 +3,14 @@
 @section('content')
     <div class="container-xxl container-p-y">
 
-        <!-- HEADER -->
+        {{-- HEADER --}}
         <div class="mb-4">
             <h3 class="fw-bold mb-1">Dashboard Admin</h3>
             <small class="text-muted">Monitoring sistem parkir secara real-time</small>
         </div>
 
-        <!-- STATISTICS -->
+        {{-- STAT CARDS --}}
         <div class="row g-4 mb-4">
-
-            <!-- CARD -->
             @php
                 $cards = [
                     ['title' => 'Parkir Aktif', 'value' => $parkirAktif, 'icon' => 'ri-car-fill', 'color' => 'primary'],
@@ -39,11 +37,11 @@
 
             @foreach ($cards as $c)
                 <div class="col-xl-3 col-md-6">
-                    <div class="card border-0 shadow-sm h-100 hover-shadow transition">
+                    <div class="card border-0 shadow-sm h-100 hover-shadow">
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
                                 <small class="text-muted">{{ $c['title'] }}</small>
-                                <h3 class="fw-bold mb-0 mt-1">{{ $c['value'] }}</h3>
+                                <h3 class="fw-bold mt-1 mb-0">{{ $c['value'] }}</h3>
                             </div>
                             <div class="icon-box bg-{{ $c['color'] }} bg-opacity-10 text-{{ $c['color'] }}">
                                 <i class="{{ $c['icon'] }}"></i>
@@ -52,16 +50,15 @@
                     </div>
                 </div>
             @endforeach
-
         </div>
 
         <div class="row g-4">
 
-            <!-- CHART -->
+            {{-- CHART --}}
             <div class="col-lg-7">
                 <div class="card shadow-sm border-0 h-100">
-                    <div class="card-header d-flex justify-content-between">
-                        <h5 class="mb-0">Pendapatan 7 Hari</h5>
+                    <div class="card-header">
+                        <h5 class="mb-0">Pendapatan 7 Hari Terakhir</h5>
                     </div>
                     <div class="card-body">
                         <canvas id="chartPendapatan" height="120"></canvas>
@@ -69,15 +66,15 @@
                 </div>
             </div>
 
-            <!-- AREA -->
+            {{-- AREA PROGRESS --}}
             <div class="col-lg-5">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header">
-                        <h5 class="mb-0">Kapasitas Area</h5>
+                        <h5 class="mb-0">Kapasitas Area Parkir</h5>
                     </div>
                     <div class="card-body">
 
-                        @foreach ($areas as $area)
+                        @forelse ($areas as $area)
                             @php
                                 $persen = $area->kapasitas > 0 ? ($area->terisi / $area->kapasitas) * 100 : 0;
                             @endphp
@@ -88,20 +85,22 @@
                                     <small>{{ $area->terisi }}/{{ $area->kapasitas }}</small>
                                 </div>
 
-                                <div class="progress mt-1" style="height: 6px;">
-                                    <div class="progress-bar 
-                                {{ $persen > 80 ? 'bg-danger' : ($persen > 50 ? 'bg-warning' : 'bg-primary') }}"
+                                <div class="progress mt-1" style="height:6px;">
+                                    <div class="progress-bar
+                                    {{ $persen > 80 ? 'bg-danger' : ($persen > 50 ? 'bg-warning' : 'bg-primary') }}"
                                         style="width: {{ $persen }}%">
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                        @empty
+                            <p class="text-muted text-center">Belum ada area parkir</p>
+                        @endforelse
 
                     </div>
                 </div>
             </div>
 
-            <!-- LOG -->
+            {{-- LOG AKTIVITAS --}}
             <div class="col-12">
                 <div class="card shadow-sm border-0">
                     <div class="card-header">
@@ -138,7 +137,6 @@
         </div>
     </div>
 
-    <!-- STYLE -->
     <style>
         .icon-box {
             width: 50px;
@@ -156,18 +154,17 @@
         }
     </style>
 
-    <!-- CHART -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const ctx = document.getElementById('chartPendapatan');
+        const labels = {!! json_encode($chart->pluck('tanggal')) !!};
+        const totals = {!! json_encode($chart->pluck('total')) !!};
 
-        new Chart(ctx, {
+        new Chart(document.getElementById('chartPendapatan'), {
             type: 'line',
             data: {
-                labels: {!! json_encode($chart->pluck('tanggal')) !!},
+                labels: labels,
                 datasets: [{
-                    label: 'Pendapatan',
-                    data: {!! json_encode($chart->pluck('total')) !!},
+                    data: totals,
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,
@@ -183,9 +180,7 @@
                 scales: {
                     y: {
                         ticks: {
-                            callback: function(value) {
-                                return 'Rp ' + value.toLocaleString();
-                            }
+                            callback: value => 'Rp ' + value.toLocaleString()
                         }
                     }
                 }

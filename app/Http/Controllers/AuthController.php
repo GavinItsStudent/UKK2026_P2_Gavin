@@ -29,7 +29,7 @@ class AuthController extends Controller
 
             
             $user->update([
-                'status_aktif' => 1
+                'status_aktif' => 0
             ]);
 
             if ($user->role === 'admin') {

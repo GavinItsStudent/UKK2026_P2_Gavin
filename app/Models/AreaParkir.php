@@ -42,4 +42,6 @@ class AreaParkir extends Model
         }
         return 'success';
     }
+
+    
 }
