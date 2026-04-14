@@ -138,18 +138,20 @@
                         </li>
                     @endif
 
+                    
                     {{-- Owner Menu --}}
                     @if (Auth::check() && Auth::user()->role == 'owner')
-                        <li class="menu-item active">
+                        <li class="menu-item {{ request()->routeIs('owner.dashboard') ? 'active' : '' }}">
                             <a href="{{ route('owner.dashboard') }}" class="menu-link">
                                 <i class="menu-icon ri ri-home-4-line"></i>
-                                <div data-i18n="Dashboard">Dashboard</div>
+                                <div>Dashboard</div>
                             </a>
                         </li>
-                        <li class="menu-item">
+
+                        <li class="menu-item {{ request()->routeIs('owner.rekap') ? 'active' : '' }}">
                             <a href="{{ route('owner.rekap') }}" class="menu-link">
                                 <i class="menu-icon ri ri-file-list-3-line"></i>
-                                <div data-i18n="Rekap Transaksi">Rekap Transaksi</div>
+                                <div>Rekap Transaksi</div>
                             </a>
                         </li>
                     @endif

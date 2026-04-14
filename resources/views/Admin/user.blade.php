@@ -94,7 +94,7 @@
                                         data-email="{{ $user->email }}" data-role="{{ $user->role }}"
                                         data-shift="{{ $user->shift_id }}" data-bs-toggle="modal"
                                         data-bs-target="#editModal">
-                                        Edit
+                                        <i class="ri-pencil-line"></i>
                                     </button>
 
                                     <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST"
@@ -103,7 +103,7 @@
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger"
                                             onclick="return confirm('Yakin hapus user?')">
-                                            Hapus
+                                            <i class="ri-delete-bin-line"></i>
                                         </button>
                                     </form>
                                 </td>
